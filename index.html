@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPYBANK</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background: #6a11cb;
+      padding: 20px;
+      font-size: 2rem;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    main { margin-top: 30px; padding: 20px; }
+    input, button {
+      display: block;
+      width: 80%;
+      max-width: 300px;
+      margin: 10px auto;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: none;
+    }
+    input { border: 1px solid #ccc; color: #333; }
+    button {
+      background: #6a11cb;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: #4c0fa8; }
+    .hidden { display: none; }
+    #balance { font-size: 1.5rem; margin: 20px 0; }
+    .task {
+      background: white;
+      color: black;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .task.done {
+      background: #4caf50;
+      color: white;
+    }
+    .mobile input, .mobile button {
+      max-width: 90%;
+      font-size: 1.2rem;
+      padding: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<header>FPYBANK</header>
+
+<main>
+  <!-- Экран выбора устройства -->
+  <div id="deviceSelect">
+    <h2>Вы с чего?</h2>
+    <button onclick="startPC()">ПК</button>
+    <button onclick="startPhone()">Телефон</button>
+  </div>
+
+  <!-- Регистрация -->
+  <div id="register" class="hidden">
+    <h2>Регистрация</h2>
+    <input type="text" id="phone" placeholder="Номер телефона">
+    <input type="password" id="password" placeholder="Пароль">
+    <button id="registerBtn">Зарегистрироваться</button>
+    <p id="error" style="color: red;"></p>
+  </div>
+
+  <!-- Кабинет -->
+  <div id="cabinet" class="hidden">
+    <div id="balance">Баланс: <span id="money">0</span> ₽</div>
+    <button onclick="openTransfers()">Переводы</button>
+    <button onclick="openWithdraw()">Вывод</button>
+    <button onclick="openTasks()">Бесплатные деньги</button>
+  </div>
+
+  <!-- Переводы -->
+  <div id="transfers" class="hidden">
+    <h2>Переводы</h2>
+    <input type="text" id="targetPhone" placeholder="Номер получателя">
+    <input type="number" id="amount" placeholder="Сумма">
+    <button onclick="checkTransfer()">Проверить</button>
+    <p id="transferResult"></p>
+    <button onclick="backToCabinet()">Назад</button>
+  </div>
+
+  <!-- Вывод -->
+  <div id="withdraw" class="hidden">
+    <h2>Вывод</h2>
+    <p>Сайт в бете, ожидайте 🚧</p>
+    <button onclick="backToCabinet()">Назад</button>
+  </div>
+
+  <!-- Задания -->
+  <div id="tasks" class="hidden">
+    <h2>Бесплатные деньги</h2>
+    <div id="taskList"></div>
+    <button onclick="backToCabinet()">Назад</button>
+  </div>
+</main>
+
+<script>
+  const deviceSelect = document.getElementById("deviceSelect");
+  const registerDiv = document.getElementById("register");
+  const cabinetDiv = document.getElementById("cabinet");
+  const moneyEl = document.getElementById("money");
+  const registerBtn = document.getElementById("registerBtn");
+  const error = document.getElementById("error");
+
+  let balance = 0;
+
+  // Устройство
+  function startPC() {
+    deviceSelect.classList.add("hidden");
+    registerDiv.classList.remove("hidden");
+  }
+  function startPhone() {
+    document.body.classList.add("mobile");
+    deviceSelect.classList.add("hidden");
+    registerDiv.classList.remove("hidden");
+  }
+
+  // Регистрация
+  registerBtn.addEventListener("click", () => {
+    const password = document.getElementById("password").value;
+    if (password.trim() === "") {
+      error.textContent = "Зарегистрируйтесь!";
+    } else {
+      registerDiv.classList.add("hidden");
+      cabinetDiv.classList.remove("hidden");
+    }
+  });
+
+  // Переводы
+  function openTransfers() {
+    cabinetDiv.classList.add("hidden");
+    document.getElementById("transfers").classList.remove("hidden");
+  }
+  function checkTransfer() {
+    document.getElementById("transferResult").textContent = "Не найден";
+  }
+
+  // Вывод
+  function openWithdraw() {
+    cabinetDiv.classList.add("hidden");
+    document.getElementById("withdraw").classList.remove("hidden");
+  }
+
+  // Задания
+  function openTasks() {
+    cabinetDiv.classList.add("hidden");
+    document.getElementById("tasks").classList.remove("hidden");
+
+    const taskList = document.getElementById("taskList");
+    taskList.innerHTML = "";
+
+    for (let i = 1; i <= 15; i++) {
+      const task = document.createElement("div");
+      task.className = "task";
+      task.textContent = `Задание ${i}`;
+      task.onclick = () => startTask(task);
+      taskList.appendChild(task);
+    }
+  }
+
+  function startTask(task) {
+    if (task.classList.contains("done")) return;
+
+    const type = Math.floor(Math.random() * 3); // 0,1,2 → разные задания
+    let success = false;
+
+    if (type === 0) {
+      const num = Math.floor(Math.random() * 5) + 1;
+      const guess = prompt("Угадай число от 1 до 5:");
+      if (parseInt(guess) === num) success = true;
+    } else if (type === 1) {
+      const answer = prompt("Сколько будет 2+2?");
+      if (answer === "4") success = true;
+    } else {
+      const text = "FPY";
+      const input = prompt(`Введите слово: ${text}`);
+      if (input === text) success = true;
+    }
+
+    if (success) {
+      task.classList.add("done");
+      task.textContent += " ✔ Выполнено (+50 ₽)";
+      balance += 50;
+      moneyEl.textContent = balance;
+    } else {
+      alert("Неправильно, попробуйте снова!");
+    }
+  }
+
+  // Назад в кабинет
+  function backToCabinet() {
+    document.querySelectorAll("main > div").forEach(div => div.classList.add("hidden"));
+    cabinetDiv.classList.remove("hidden");
+  }
+</script>
+
+</body>
+</html>
